@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Offline Gita AI</title>
+<title>Krishna AI (Puter + Voice)</title>
+
+<script src="https://js.puter.com/v2/"></script>
 
 <style>
 body {
@@ -19,24 +21,20 @@ header {
     font-weight: bold;
 }
 #chat {
-    height: 75vh;
+    height: 70vh;
     overflow-y: auto;
     padding: 10px;
 }
 .msg {
     margin: 10px;
-    padding: 10px;
+    padding: 12px;
     border-radius: 10px;
-    max-width: 70%;
+    max-width: 75%;
 }
-.user {
-    background: #007bff;
-    margin-left: auto;
-}
-.bot {
-    background: #222;
-}
-#inputArea {
+.user { background: #007bff; margin-left: auto; }
+.bot { background: #222; }
+
+#controls {
     display: flex;
 }
 input {
@@ -48,28 +46,50 @@ input {
 }
 button {
     padding: 12px;
+    border: none;
     background: green;
     color: white;
-    border: none;
+    cursor: pointer;
+}
+#voiceBtn {
+    background: orange;
 }
 </style>
 </head>
 
 <body>
 
-<header>🧘 Offline Gita Guide (Nepali)</header>
+<header>🧘 Krishna AI Guide (Deep + Voice)</header>
 
 <div id="chat"></div>
 
-<div id="inputArea">
-<input id="input" placeholder="प्रश्न लेख्नुहोस्...">
+<div id="controls">
+<input id="input" placeholder="तपाईंको समस्या लेख्नुहोस्...">
 <button onclick="send()">Send</button>
+<button id="voiceBtn" onclick="toggleVoice()">🎙️ Voice OFF</button>
 </div>
 
-<script src="gita.js"></script>
-
 <script>
+// 🎙️ Voice toggle
+let voiceEnabled = false;
 
+function toggleVoice(){
+    voiceEnabled = !voiceEnabled;
+    document.getElementById("voiceBtn").innerText = voiceEnabled ? "🎙️ Voice ON" : "🎙️ Voice OFF";
+}
+
+// 🔊 Speak
+function speak(text){
+    if(!voiceEnabled) return;
+
+    let speech = new SpeechSynthesisUtterance(text);
+    speech.lang = "ne-NP";
+    speech.rate = 0.9;
+    speech.pitch = 1;
+    speechSynthesis.speak(speech);
+}
+
+// UI
 function add(text, cls){
     let div = document.createElement("div");
     div.className = "msg " + cls;
@@ -78,28 +98,22 @@ function add(text, cls){
     document.getElementById("chat").scrollTop = 999999;
 }
 
-function findAnswer(q){
-    q = q.toLowerCase();
+// 📖 Mini Gita DB (expand later)
+const GITA = [
+{chapter:2, verse:47, text:"कर्मण्येवाधिकारस्ते...", meaning:"कर्म गर, फलको चिन्ता नगर", theme:"duty"},
+{chapter:2, verse:14, text:"सुख-दुःख अस्थायी हुन्", meaning:"धैर्य राख", theme:"emotion"},
+{chapter:6, verse:5, text:"आफूलाई उठाऊ", meaning:"आत्म-नियन्त्रण गर", theme:"self"},
+{chapter:18, verse:66, text:"शरणमा आऊ", meaning:"डर त्याग", theme:"fear"}
+];
 
-    for(let g of GITA){
-        for(let k of g.keywords){
-            if(q.includes(k)){
-                return `📖 अध्याय ${g.chapter}, श्लोक ${g.verse}
-
-${g.sanskrit}
-
-👉 ${g.meaning_np}
-
-🧘 मार्गदर्शन:
-जीवनमा आफ्नो कर्तव्यमा ध्यान देऊ र परिणामको चिन्ता नगर।`;
-            }
-        }
-    }
-
-    return "🧘 शान्त रहनुहोस्। आफ्नो मनलाई नियन्त्रण गर्नुहोस्। जीवनमा धैर्य र अनुशासन आवश्यक छ।";
+// 🎯 Find best shloka
+function findShloka(theme){
+    let list = GITA.filter(x => x.theme === theme);
+    return list.length ? list[Math.floor(Math.random()*list.length)] : GITA[0];
 }
 
-function send(){
+// 🚀 MAIN AI
+async function send(){
     let input = document.getElementById("input");
     let text = input.value.trim();
     if(!text) return;
@@ -107,17 +121,48 @@ function send(){
     add(text, "user");
     input.value = "";
 
-    let reply = findAnswer(text);
+    add("सोच्दै छु...", "bot");
 
-    setTimeout(()=>{
-        add(reply, "bot");
-    }, 500);
+    // 🧠 PUTER AI CALL
+    let ai = await puter.ai.chat(`
+तिमी भगवान कृष्णजस्तै एक ज्ञानी गुरु हौ।
+
+User problem:
+"${text}"
+
+1. समस्या के हो (emotion, fear, laziness, confusion)
+2. एउटा छोटो theme देऊ (emotion/fear/self/duty)
+3. नेपालीमा गहिरो मार्गदर्शन देऊ
+
+Format:
+theme: ...
+answer: ...
+`);
+
+    let result = await ai.text();
+
+    document.querySelector(".bot:last-child").remove();
+
+    let themeMatch = result.match(/theme:\s*(\w+)/);
+    let theme = themeMatch ? themeMatch[1] : "duty";
+
+    let shloka = findShloka(theme);
+
+    let final = `📖 अध्याय ${shloka.chapter}, श्लोक ${shloka.verse}
+
+${shloka.text}
+
+👉 ${shloka.meaning}
+
+🧘 मार्गदर्शन:
+${result}`;
+
+    add(final, "bot");
+    speak(final);
 }
-
 </script>
 
 </body>
 </html>
 
 
-    
