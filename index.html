@@ -123,42 +123,27 @@ async function send(){
 
     add("सोच्दै छु...", "bot");
 
-    // 🧠 PUTER AI CALL
-    let ai = await puter.ai.chat(`
-तिमी भगवान कृष्णजस्तै एक ज्ञानी गुरु हौ।
+    // Simple local logic (always works)
+    let theme = "duty";
 
-User problem:
-"${text}"
-
-1. समस्या के हो (emotion, fear, laziness, confusion)
-2. एउटा छोटो theme देऊ (emotion/fear/self/duty)
-3. नेपालीमा गहिरो मार्गदर्शन देऊ
-
-Format:
-theme: ...
-answer: ...
-`);
-
-    let result = await ai.text();
-
-    document.querySelector(".bot:last-child").remove();
-
-    let themeMatch = result.match(/theme:\s*(\w+)/);
-    let theme = themeMatch ? themeMatch[1] : "duty";
+    if(text.includes("दुःख") || text.includes("sad")) theme = "emotion";
+    if(text.includes("डर") || text.includes("fear")) theme = "fear";
+    if(text.includes("अल्छी") || text.includes("lazy")) theme = "self";
 
     let shloka = findShloka(theme);
 
-    let final = `📖 अध्याय ${shloka.chapter}, श्लोक ${shloka.verse}
+    let response = `📖 अध्याय ${shloka.chapter}, श्लोक ${shloka.verse}
 
 ${shloka.text}
 
 👉 ${shloka.meaning}
 
 🧘 मार्गदर्शन:
-${result}`;
+तिमीले आफ्नो कर्तव्यमा ध्यान दिनुपर्छ। डर र दुःख अस्थायी हुन्।`;
 
-    add(final, "bot");
-    speak(final);
+    document.querySelector(".bot:last-child").remove();
+    add(response, "bot");
+    speak(response);
 }
 </script>
 
