@@ -3,153 +3,121 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gita AI Guide</title>
+<title>Offline Gita AI</title>
 
 <style>
 body {
     margin: 0;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI';
     background: #0d0d0d;
     color: white;
 }
-
 header {
-    background: #111;
     padding: 15px;
     text-align: center;
-    font-size: 20px;
+    background: #111;
     font-weight: bold;
-    border-bottom: 1px solid #333;
 }
-
-#chatBox {
+#chat {
     height: 75vh;
     overflow-y: auto;
-    padding: 15px;
+    padding: 10px;
 }
-
-.message {
-    margin: 10px 0;
-    padding: 10px 15px;
-    border-radius: 12px;
-    max-width: 75%;
+.msg {
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 70%;
 }
-
 .user {
     background: #007bff;
     margin-left: auto;
 }
-
 .bot {
     background: #222;
 }
-
 #inputArea {
     display: flex;
-    border-top: 1px solid #333;
 }
-
 input {
     flex: 1;
-    padding: 15px;
+    padding: 12px;
     border: none;
-    outline: none;
     background: #111;
     color: white;
 }
-
 button {
-    padding: 15px;
-    border: none;
-    background: #28a745;
+    padding: 12px;
+    background: green;
     color: white;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #218838;
+    border: none;
 }
 </style>
 </head>
 
 <body>
 
-<header>🧘 Gita AI Guide (Nepali)</header>
+<header>🧘 Offline Gita Guide (Nepali)</header>
 
-<div id="chatBox"></div>
+<div id="chat"></div>
 
 <div id="inputArea">
-    <input type="text" id="userInput" placeholder="तपाईंको प्रश्न लेख्नुहोस्...">
-    <button onclick="sendMessage()">Send</button>
+<input id="input" placeholder="प्रश्न लेख्नुहोस्...">
+<button onclick="send()">Send</button>
 </div>
 
-<script>
-const API_KEY = "AIzaSyCTMQ7XqBgtcY0lToume-DFBBvnciSRAMA";
+<script src="gita.js"></script>
 
-function addMessage(text, className) {
-    const msg = document.createElement("div");
-    msg.className = "message " + className;
-    msg.innerText = text;
-    document.getElementById("chatBox").appendChild(msg);
-    document.getElementById("chatBox").scrollTop = 999999;
+<script>
+
+function add(text, cls){
+    let div = document.createElement("div");
+    div.className = "msg " + cls;
+    div.innerText = text;
+    document.getElementById("chat").appendChild(div);
+    document.getElementById("chat").scrollTop = 999999;
 }
 
-async function sendMessage() {
-    const input = document.getElementById("userInput");
-    const userText = input.value.trim();
-    if (!userText) return;
+function findAnswer(q){
+    q = q.toLowerCase();
 
-    addMessage(userText, "user");
+    for(let g of GITA){
+        for(let k of g.keywords){
+            if(q.includes(k)){
+                return `📖 अध्याय ${g.chapter}, श्लोक ${g.verse}
+
+${g.sanskrit}
+
+👉 ${g.meaning_np}
+
+🧘 मार्गदर्शन:
+जीवनमा आफ्नो कर्तव्यमा ध्यान देऊ र परिणामको चिन्ता नगर।`;
+            }
+        }
+    }
+
+    return "🧘 शान्त रहनुहोस्। आफ्नो मनलाई नियन्त्रण गर्नुहोस्। जीवनमा धैर्य र अनुशासन आवश्यक छ।";
+}
+
+function send(){
+    let input = document.getElementById("input");
+    let text = input.value.trim();
+    if(!text) return;
+
+    add(text, "user");
     input.value = "";
 
-    addMessage("सोच्दै छु...", "bot");
+    let reply = findAnswer(text);
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Authorization": "Bearer " + API_KEY,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [
-                {
-                    role: "system",
-                    content: `
-तिमी भगवान श्रीकृष्णको शिक्षाबाट प्रेरित एक बुद्धिमान आध्यात्मिक गुरु हौ।
-
-नियम:
-- सधैं नेपाली भाषामा जवाफ देऊ
-- जीवनका समस्यामा भगवद् गीताको शिक्षाको आधारमा मार्गदर्शन देऊ
-- शान्त, गहिरो र प्रेरणादायक शैली प्रयोग गर
-- आवश्यक परे अध्याय र श्लोक उल्लेख गर
-- प्रयोगकर्तालाई सही बाटो (धर्म, कर्म, आत्म-नियन्त्रण) मा लैजाने प्रयास गर
-
-यदि प्रयोगकर्ता:
-- दुःखी छ → सान्त्वना देऊ
-- अलमलमा छ → स्पष्टता देऊ
-- अल्छी छ → कर्तव्य सम्झाउ
-- डराएको छ → साहस देऊ
-`
-                },
-                {
-                    role: "user",
-                    content: userText
-                }
-            ]
-        })
-    });
-
-    const data = await response.json();
-    document.querySelector(".bot:last-child").remove();
-
-    if (data.choices && data.choices[0]) {
-        addMessage(data.choices[0].message.content, "bot");
-    } else {
-        addMessage("केही समस्या आयो, फेरि प्रयास गर्नुहोस्।", "bot");
-    }
+    setTimeout(()=>{
+        add(reply, "bot");
+    }, 500);
 }
+
 </script>
 
 </body>
 </html>
+
+
+    
