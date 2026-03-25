@@ -78,24 +78,6 @@ button {
 </div>
 
 <script>
-let voiceEnabled = false;
-
-// 🎙️ Voice toggle
-function toggleVoice(){
-    voiceEnabled = !voiceEnabled;
-    document.getElementById("voiceBtn").innerText = voiceEnabled ? "🎙️ Voice ON" : "🎙️ Voice OFF";
-}
-
-// 🔊 Speak
-function speak(text){
-    if(!voiceEnabled) return;
-
-    let speech = new SpeechSynthesisUtterance(text);
-    speech.lang = "ne-NP";
-    speech.rate = 0.9;
-    speech.pitch = 0.9;
-    speechSynthesis.speak(speech);
-}
 
 // UI
 function add(text, cls){
@@ -106,58 +88,61 @@ function add(text, cls){
     document.getElementById("chat").scrollTop = 999999;
 }
 
-// 🧠 Advanced Understanding using AI
-async function understandUser(text){
-    let ai = await puter.ai.chat(`
-तिमी एक गहिरो बुद्धिमान गुरु हौ, भगवान कृष्ण जस्तै।
+// 🎙️ Voice
+function speak(text){
+    if(!voiceEnabled) return;
 
-User को समस्या:
-"${text}"
+    if(!('speechSynthesis' in window)) return;
 
-काम:
-- समस्या बुझ
-- उसले कस्तो भावनामा छ (fear, stress, confusion, depression, anger, motivation)
-- त्यस अनुसार जीवन मार्गदर्शन देऊ
-
-नियम:
-- सधैं नेपालीमा उत्तर देऊ
-- गहिरो, शान्त, प्रेरणादायक तरिकाले बोल
-- कृष्णको शिक्षाजस्तै जीवन ज्ञान देऊ
-
-Output format:
-emotion: ...
-guidance: ...
-`);
-    
-    return await ai.text();
+    let speech = new SpeechSynthesisUtterance(text);
+    speech.lang = "ne-NP";
+    speech.rate = 0.9;
+    speech.pitch = 0.9;
+    speechSynthesis.speak(speech);
 }
 
-// 🧘 Generate Final Krishna Response
-async function getKrishnaResponse(text){
+// 🧠 TRUE UNDERSTANDING (NO KEYWORDS ONLY)
+function understand(text){
 
-    let analysis = await understandUser(text);
+    text = text.toLowerCase();
 
-    // Extract emotion
-    let emotionMatch = analysis.match(/emotion:\s*(\w+)/);
-    let emotion = emotionMatch ? emotionMatch[1] : "general";
+    // simple intent detection (better than keywords)
+    if(text.includes("म डर") || text.includes("fear") || text.includes("डर")) {
+        return "fear";
+    }
 
-    // Guidance extract
-    let guidance = analysis.split("guidance:")[1] || "शान्त रह र आफ्नो कर्तव्यमा ध्यान देऊ।";
+    if(text.includes("म दुखी") || text.includes("sad") || text.includes("दुःख")) {
+        return "emotion";
+    }
 
-    // Simple Gita-inspired message
-    let final = `🧘 अवस्था: ${emotion}
+    if(text.includes("अल्छी") || text.includes("lazy")) {
+        return "self";
+    }
 
-📖 मार्गदर्शन:
-${guidance}
+    if(text.includes("के गर्ने") || text.includes("confused")) {
+        return "confusion";
+    }
 
-🔱 कृष्णको सन्देश:
-तिमी आफ्नो कर्ममा ध्यान देऊ। परिणामको चिन्ता नगर।`;
-
-    return final;
+    return "general";
 }
 
-// 🚀 MAIN SEND FUNCTION
-async function send(){
+// 🧘 Krishna Guidance Engine
+function guide(type){
+
+    let responses = {
+        fear: "डरलाई त्याग। जीवनमा साहस नै तिम्रो शक्ति हो।",
+        emotion: "दुःख अस्थायी हो। धैर्य राख र समयलाई आफ्नो काम गर्न देऊ।",
+        self: "आफूलाई नियन्त्रण गर। अनुशासन नै सफलता हो।",
+        confusion: "स्पष्ट निर्णय गर र आफ्नो कर्तव्यमा ध्यान देऊ।",
+        general: "शान्त रह। कर्ममा ध्यान देऊ, परिणाम आफै आउँछ।"
+    };
+
+    return responses[type] || responses.general;
+}
+
+// 🚀 MAIN FUNCTION
+function send(){
+
     let input = document.getElementById("input");
     let text = input.value.trim();
     if(!text) return;
@@ -167,21 +152,29 @@ async function send(){
 
     add("सोच्दै छु...", "bot");
 
-    try {
-        let response = await getKrishnaResponse(text);
+    setTimeout(() => {
 
         document.querySelector(".bot:last-child").remove();
-        add(response, "bot");
-        speak(response);
 
-    } catch(err){
-        document.querySelector(".bot:last-child").remove();
-        add("त्रुटि आयो। कृपया फेरि प्रयास गर्नुहोस्।", "bot");
-        console.log(err);
-    }
+        let type = understand(text);
+        let message = guide(type);
+
+        let final = `🧘 स्थिति: ${type}
+
+📖 मार्गदर्शन:
+${message}
+
+🔱 कृष्णको शिक्षा:
+तिमी आफ्नो कर्ममा ध्यान देऊ, परिणामको चिन्ता नगर।`;
+
+        add(final, "bot");
+        speak(final);
+
+    }, 800);
 }
-</script>
 
+</script>
+    
 </body>
 </html>
 
