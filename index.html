@@ -3,40 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Krishna AI (Puter + Voice)</title>
+<title>Krishna AI Guide</title>
 
 <script src="https://js.puter.com/v2/"></script>
 
 <style>
 body {
     margin: 0;
-    font-family: 'Segoe UI';
-    background: #0d0d0d;
+    font-family: Arial, sans-serif;
+    background: #0b0b0b;
     color: white;
 }
+
 header {
     padding: 15px;
     text-align: center;
     background: #111;
+    font-size: 18px;
     font-weight: bold;
 }
+
 #chat {
     height: 70vh;
     overflow-y: auto;
     padding: 10px;
 }
+
 .msg {
     margin: 10px;
     padding: 12px;
     border-radius: 10px;
     max-width: 75%;
 }
+
 .user { background: #007bff; margin-left: auto; }
 .bot { background: #222; }
 
-#controls {
+#inputArea {
     display: flex;
 }
+
 input {
     flex: 1;
     padding: 12px;
@@ -44,6 +50,7 @@ input {
     background: #111;
     color: white;
 }
+
 button {
     padding: 12px;
     border: none;
@@ -51,6 +58,7 @@ button {
     color: white;
     cursor: pointer;
 }
+
 #voiceBtn {
     background: orange;
 }
@@ -59,20 +67,20 @@ button {
 
 <body>
 
-<header>🧘 Krishna AI Guide (Deep + Voice)</header>
+<header>🧘 Krishna AI (Understanding Mode + Voice)</header>
 
 <div id="chat"></div>
 
-<div id="controls">
+<div id="inputArea">
 <input id="input" placeholder="तपाईंको समस्या लेख्नुहोस्...">
 <button onclick="send()">Send</button>
 <button id="voiceBtn" onclick="toggleVoice()">🎙️ Voice OFF</button>
 </div>
 
 <script>
-// 🎙️ Voice toggle
 let voiceEnabled = false;
 
+// 🎙️ Voice toggle
 function toggleVoice(){
     voiceEnabled = !voiceEnabled;
     document.getElementById("voiceBtn").innerText = voiceEnabled ? "🎙️ Voice ON" : "🎙️ Voice OFF";
@@ -85,7 +93,7 @@ function speak(text){
     let speech = new SpeechSynthesisUtterance(text);
     speech.lang = "ne-NP";
     speech.rate = 0.9;
-    speech.pitch = 1;
+    speech.pitch = 0.9;
     speechSynthesis.speak(speech);
 }
 
@@ -98,21 +106,57 @@ function add(text, cls){
     document.getElementById("chat").scrollTop = 999999;
 }
 
-// 📖 Mini Gita DB (expand later)
-const GITA = [
-{chapter:2, verse:47, text:"कर्मण्येवाधिकारस्ते...", meaning:"कर्म गर, फलको चिन्ता नगर", theme:"duty"},
-{chapter:2, verse:14, text:"सुख-दुःख अस्थायी हुन्", meaning:"धैर्य राख", theme:"emotion"},
-{chapter:6, verse:5, text:"आफूलाई उठाऊ", meaning:"आत्म-नियन्त्रण गर", theme:"self"},
-{chapter:18, verse:66, text:"शरणमा आऊ", meaning:"डर त्याग", theme:"fear"}
-];
+// 🧠 Advanced Understanding using AI
+async function understandUser(text){
+    let ai = await puter.ai.chat(`
+तिमी एक गहिरो बुद्धिमान गुरु हौ, भगवान कृष्ण जस्तै।
 
-// 🎯 Find best shloka
-function findShloka(theme){
-    let list = GITA.filter(x => x.theme === theme);
-    return list.length ? list[Math.floor(Math.random()*list.length)] : GITA[0];
+User को समस्या:
+"${text}"
+
+काम:
+- समस्या बुझ
+- उसले कस्तो भावनामा छ (fear, stress, confusion, depression, anger, motivation)
+- त्यस अनुसार जीवन मार्गदर्शन देऊ
+
+नियम:
+- सधैं नेपालीमा उत्तर देऊ
+- गहिरो, शान्त, प्रेरणादायक तरिकाले बोल
+- कृष्णको शिक्षाजस्तै जीवन ज्ञान देऊ
+
+Output format:
+emotion: ...
+guidance: ...
+`);
+    
+    return await ai.text();
 }
 
-// 🚀 MAIN AI
+// 🧘 Generate Final Krishna Response
+async function getKrishnaResponse(text){
+
+    let analysis = await understandUser(text);
+
+    // Extract emotion
+    let emotionMatch = analysis.match(/emotion:\s*(\w+)/);
+    let emotion = emotionMatch ? emotionMatch[1] : "general";
+
+    // Guidance extract
+    let guidance = analysis.split("guidance:")[1] || "शान्त रह र आफ्नो कर्तव्यमा ध्यान देऊ।";
+
+    // Simple Gita-inspired message
+    let final = `🧘 अवस्था: ${emotion}
+
+📖 मार्गदर्शन:
+${guidance}
+
+🔱 कृष्णको सन्देश:
+तिमी आफ्नो कर्ममा ध्यान देऊ। परिणामको चिन्ता नगर।`;
+
+    return final;
+}
+
+// 🚀 MAIN SEND FUNCTION
 async function send(){
     let input = document.getElementById("input");
     let text = input.value.trim();
@@ -123,31 +167,23 @@ async function send(){
 
     add("सोच्दै छु...", "bot");
 
-    // Simple local logic (always works)
-    let theme = "duty";
+    try {
+        let response = await getKrishnaResponse(text);
 
-    if(text.includes("दुःख") || text.includes("sad")) theme = "emotion";
-    if(text.includes("डर") || text.includes("fear")) theme = "fear";
-    if(text.includes("अल्छी") || text.includes("lazy")) theme = "self";
+        document.querySelector(".bot:last-child").remove();
+        add(response, "bot");
+        speak(response);
 
-    let shloka = findShloka(theme);
-
-    let response = `📖 अध्याय ${shloka.chapter}, श्लोक ${shloka.verse}
-
-${shloka.text}
-
-👉 ${shloka.meaning}
-
-🧘 मार्गदर्शन:
-तिमीले आफ्नो कर्तव्यमा ध्यान दिनुपर्छ। डर र दुःख अस्थायी हुन्।`;
-
-    document.querySelector(".bot:last-child").remove();
-    add(response, "bot");
-    speak(response);
+    } catch(err){
+        document.querySelector(".bot:last-child").remove();
+        add("त्रुटि आयो। कृपया फेरि प्रयास गर्नुहोस्।", "bot");
+        console.log(err);
+    }
 }
 </script>
 
 </body>
 </html>
+
 
 
